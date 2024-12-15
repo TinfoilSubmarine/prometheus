@@ -39,34 +39,34 @@ func GenerateTestHistogramWithHint(n int, hint histogram.CounterResetHint) *hist
 // GenerateTestHistogram but it is up to the user to set any known counter reset hint.
 func GenerateTestHistogram(i int) *histogram.Histogram {
 	return &histogram.Histogram{
-		Count:         12 + uint64(i*9),
+		Count:         12 + uint64(i)*9,
 		ZeroCount:     2 + uint64(i),
 		ZeroThreshold: 0.001,
-		Sum:           18.4 * float64(i+1),
+		Sum:           18.4 * float64(uint64(i)+1),
 		Schema:        1,
 		PositiveSpans: []histogram.Span{
 			{Offset: 0, Length: 2},
 			{Offset: 1, Length: 2},
 		},
-		PositiveBuckets: []int64{int64(i + 1), 1, -1, 0},
+		PositiveBuckets: []int64{int64(i) + 1, 1, -1, 0},
 		NegativeSpans: []histogram.Span{
 			{Offset: 0, Length: 2},
 			{Offset: 1, Length: 2},
 		},
-		NegativeBuckets: []int64{int64(i + 1), 1, -1, 0},
+		NegativeBuckets: []int64{int64(i) + 1, 1, -1, 0},
 	}
 }
 
 func GenerateTestCustomBucketsHistogram(i int) *histogram.Histogram {
 	return &histogram.Histogram{
-		Count:  5 + uint64(i*4),
-		Sum:    18.4 * float64(i+1),
+		Count:  5 + uint64(i)*4,
+		Sum:    18.4 * float64(uint64(i)+1),
 		Schema: histogram.CustomBucketsSchema,
 		PositiveSpans: []histogram.Span{
 			{Offset: 0, Length: 2},
 			{Offset: 1, Length: 2},
 		},
-		PositiveBuckets: []int64{int64(i + 1), 1, -1, 0},
+		PositiveBuckets: []int64{int64(i) + 1, 1, -1, 0},
 		CustomValues:    []float64{0, 1, 2, 3, 4},
 	}
 }
@@ -99,34 +99,34 @@ func GenerateTestFloatHistograms(n int) (r []*histogram.FloatHistogram) {
 // GenerateTestFloatHistogram but it is up to the user to set any known counter reset hint.
 func GenerateTestFloatHistogram(i int) *histogram.FloatHistogram {
 	return &histogram.FloatHistogram{
-		Count:         12 + float64(i*9),
-		ZeroCount:     2 + float64(i),
+		Count:         12 + float64(int64(i)*9),
+		ZeroCount:     2 + float64(int64(i)),
 		ZeroThreshold: 0.001,
-		Sum:           18.4 * float64(i+1),
+		Sum:           18.4 * float64(int64(i)+1),
 		Schema:        1,
 		PositiveSpans: []histogram.Span{
 			{Offset: 0, Length: 2},
 			{Offset: 1, Length: 2},
 		},
-		PositiveBuckets: []float64{float64(i + 1), float64(i + 2), float64(i + 1), float64(i + 1)},
+		PositiveBuckets: []float64{float64(int64(i) + 1), float64(int64(i) + 2), float64(int64(i) + 1), float64(int64(i) + 1)},
 		NegativeSpans: []histogram.Span{
 			{Offset: 0, Length: 2},
 			{Offset: 1, Length: 2},
 		},
-		NegativeBuckets: []float64{float64(i + 1), float64(i + 2), float64(i + 1), float64(i + 1)},
+		NegativeBuckets: []float64{float64(int64(i) + 1), float64(int64(i) + 2), float64(int64(i) + 1), float64(int64(i) + 1)},
 	}
 }
 
 func GenerateTestCustomBucketsFloatHistogram(i int) *histogram.FloatHistogram {
 	return &histogram.FloatHistogram{
-		Count:  5 + float64(i*4),
-		Sum:    18.4 * float64(i+1),
+		Count:  5 + float64(int64(i)*4),
+		Sum:    18.4 * float64(int64(i)+1),
 		Schema: histogram.CustomBucketsSchema,
 		PositiveSpans: []histogram.Span{
 			{Offset: 0, Length: 2},
 			{Offset: 1, Length: 2},
 		},
-		PositiveBuckets: []float64{float64(i + 1), float64(i + 2), float64(i + 1), float64(i + 1)},
+		PositiveBuckets: []float64{float64(int64(i) + 1), float64(int64(i) + 2), float64(int64(i) + 1), float64(int64(i) + 1)},
 		CustomValues:    []float64{0, 1, 2, 3, 4},
 	}
 }
