@@ -55,12 +55,12 @@ func TestOOOInsert(t *testing.T) {
 		},
 		"integer histogram": {
 			sampleFunc: func(ts int64) sample {
-				return sample{t: ts, h: tsdbutil.GenerateTestHistogram(int(ts))}
+				return sample{t: ts, h: tsdbutil.GenerateTestHistogram(ts)}
 			},
 		},
 		"float histogram": {
 			sampleFunc: func(ts int64) sample {
-				return sample{t: ts, fh: tsdbutil.GenerateTestFloatHistogram(int(ts))}
+				return sample{t: ts, fh: tsdbutil.GenerateTestFloatHistogram(ts)}
 			},
 		},
 	}
@@ -119,12 +119,12 @@ func TestOOOInsertDuplicate(t *testing.T) {
 		},
 		"integer histogram": {
 			sampleFunc: func(ts int64) sample {
-				return sample{t: ts, h: tsdbutil.GenerateTestHistogram(int(ts))}
+				return sample{t: ts, h: tsdbutil.GenerateTestHistogram(ts)}
 			},
 		},
 		"float histogram": {
 			sampleFunc: func(ts int64) sample {
-				return sample{t: ts, fh: tsdbutil.GenerateTestFloatHistogram(int(ts))}
+				return sample{t: ts, fh: tsdbutil.GenerateTestFloatHistogram(ts)}
 			},
 		},
 	}
