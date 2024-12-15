@@ -914,7 +914,7 @@ func findSamplesForMetric(floats []floatSample, metricName string) (ret []floatS
 
 // generateTestHistogram generates the same thing as tsdbutil.GenerateTestHistogram,
 // but in the form of dto.Histogram.
-func generateTestHistogram(i int) *dto.Histogram {
+func generateTestHistogram(i int64) *dto.Histogram {
 	helper := tsdbutil.GenerateTestHistogram(i)
 	h := &dto.Histogram{}
 	h.SampleCount = proto.Uint64(helper.Count)

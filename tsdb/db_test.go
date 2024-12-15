@@ -644,8 +644,8 @@ func TestDB_Snapshot(t *testing.T) {
 	ctx := context.Background()
 	app := db.Appender(ctx)
 	mint := int64(1414141414000)
-	for i := 0; i < 1000; i++ {
-		_, err := app.Append(0, labels.FromStrings("foo", "bar"), mint+int64(i), 1.0)
+	for i := int64(0); i < 1000; i++ {
+		_, err := app.Append(0, labels.FromStrings("foo", "bar"), mint+i, 1.0)
 		require.NoError(t, err)
 	}
 	require.NoError(t, app.Commit())
@@ -690,8 +690,8 @@ func TestDB_Snapshot_ChunksOutsideOfCompactedRange(t *testing.T) {
 	ctx := context.Background()
 	app := db.Appender(ctx)
 	mint := int64(1414141414000)
-	for i := 0; i < 1000; i++ {
-		_, err := app.Append(0, labels.FromStrings("foo", "bar"), mint+int64(i), 1.0)
+	for i := int64(0); i < 1000; i++ {
+		_, err := app.Append(0, labels.FromStrings("foo", "bar"), mint+i, 1.0)
 		require.NoError(t, err)
 	}
 	require.NoError(t, app.Commit())
@@ -1317,13 +1317,13 @@ func TestTombstoneCleanFail(t *testing.T) {
 	// Create some blocks pending for compaction.
 	// totalBlocks should be >=2 so we have enough blocks to trigger compaction failure.
 	totalBlocks := 2
-	for i := 0; i < totalBlocks; i++ {
-		blockDir := createBlock(t, db.Dir(), genSeries(1, 1, int64(i), int64(i)+1))
+	for i := int64(0); i < totalBlocks; i++ {
+		blockDir := createBlock(t, db.Dir(), genSeries(1, 1, i, i+1))
 		block, err := OpenBlock(nil, blockDir, nil)
 		require.NoError(t, err)
 		// Add some fake tombstones to trigger the compaction.
 		tomb := tombstones.NewMemTombstones()
-		tomb.AddInterval(0, tombstones.Interval{Mint: int64(i), Maxt: int64(i) + 1})
+		tomb.AddInterval(0, tombstones.Interval{Mint: i, Maxt: i + 1})
 		block.tombstones = tomb
 
 		db.blocks = append(db.blocks, block)
@@ -2582,8 +2582,8 @@ func TestDBReadOnly_FlushWAL(t *testing.T) {
 		db.DisableCompactions()
 		app := db.Appender(ctx)
 		maxt = 1000
-		for i := 0; i < maxt; i++ {
-			_, err := app.Append(0, labels.FromStrings(defaultLabelName, "flush"), int64(i), 1.0)
+		for i := int64(0); i < maxt; i++ {
+			_, err := app.Append(0, labels.FromStrings(defaultLabelName, "flush"), i, 1.0)
 			require.NoError(t, err)
 		}
 		require.NoError(t, app.Commit())
@@ -2666,9 +2666,9 @@ func TestDBReadOnly_Querier_NoAlteration(t *testing.T) {
 		}()
 
 		// Append until the first mmapped head chunk.
-		for i := 0; i < 121; i++ {
+		for i := int64(0); i < 121; i++ {
 			app := db.Appender(context.Background())
-			_, err := app.Append(0, labels.FromStrings("foo", "bar"), int64(i), 0)
+			_, err := app.Append(0, labels.FromStrings("foo", "bar"), i, 0)
 			require.NoError(t, err)
 			require.NoError(t, app.Commit())
 		}
@@ -3117,11 +3117,11 @@ func TestCompactHead(t *testing.T) {
 	app := db.Appender(ctx)
 	var expSamples []sample
 	maxt := 100
-	for i := 0; i < maxt; i++ {
+	for i := int64(0); i < maxt; i++ {
 		val := rand.Float64()
-		_, err := app.Append(0, labels.FromStrings("a", "b"), int64(i), val)
+		_, err := app.Append(0, labels.FromStrings("a", "b"), i, val)
 		require.NoError(t, err)
-		expSamples = append(expSamples, sample{int64(i), val, nil, nil})
+		expSamples = append(expSamples, sample{i, val, nil, nil})
 	}
 	require.NoError(t, app.Commit())
 
@@ -4100,7 +4100,7 @@ func TestOOOWALWrite(t *testing.T) {
 		},
 		"integer histogram": {
 			appendSample: func(app storage.Appender, l labels.Labels, mins int64) (storage.SeriesRef, error) {
-				seriesRef, err := app.AppendHistogram(0, l, minutes(mins), tsdbutil.GenerateTestHistogram(int(mins)), nil)
+				seriesRef, err := app.AppendHistogram(0, l, minutes(mins), tsdbutil.GenerateTestHistogram(mins), nil)
 				require.NoError(t, err)
 				return seriesRef, nil
 			},
@@ -4191,7 +4191,7 @@ func TestOOOWALWrite(t *testing.T) {
 		},
 		"float histogram": {
 			appendSample: func(app storage.Appender, l labels.Labels, mins int64) (storage.SeriesRef, error) {
-				seriesRef, err := app.AppendHistogram(0, l, minutes(mins), nil, tsdbutil.GenerateTestFloatHistogram(int(mins)))
+				seriesRef, err := app.AppendHistogram(0, l, minutes(mins), nil, tsdbutil.GenerateTestFloatHistogram(mins))
 				require.NoError(t, err)
 				return seriesRef, nil
 			},
@@ -4735,12 +4735,12 @@ func TestMultipleEncodingsCommitOrder(t *testing.T) {
 			return sample{t: ts, f: float64(ts)}
 		}
 		if valType == chunkenc.ValHistogram {
-			h := tsdbutil.GenerateTestHistogram(int(ts))
+			h := tsdbutil.GenerateTestHistogram(ts)
 			_, err := app.AppendHistogram(0, labels.FromStrings("foo", "bar1"), ts, h, nil)
 			require.NoError(t, err)
 			return sample{t: ts, h: h}
 		}
-		fh := tsdbutil.GenerateTestFloatHistogram(int(ts))
+		fh := tsdbutil.GenerateTestFloatHistogram(ts)
 		_, err := app.AppendHistogram(0, labels.FromStrings("foo", "bar1"), ts, nil, fh)
 		require.NoError(t, err)
 		return sample{t: ts, fh: fh}
@@ -4783,32 +4783,32 @@ func TestMultipleEncodingsCommitOrder(t *testing.T) {
 	// Append samples with different encoding types and then commit them at once.
 	app := db.Appender(context.Background())
 
-	for i := 100; i < 105; i++ {
-		s := addSample(app, int64(i), chunkenc.ValFloat)
+	for i := int64(100); i < 105; i++ {
+		s := addSample(app, i, chunkenc.ValFloat)
 		expSamples = append(expSamples, s)
 	}
 	// These samples will be marked as OOO as their timestamps are less than the max timestamp for float samples in the
 	// same batch.
-	for i := 110; i < 120; i++ {
-		s := addSample(app, int64(i), chunkenc.ValHistogram)
+	for i := int64(110); i < 120; i++ {
+		s := addSample(app, i, chunkenc.ValHistogram)
 		expSamples = append(expSamples, s)
 	}
 	// These samples will be marked as OOO as their timestamps are less than the max timestamp for float samples in the
 	// same batch.
-	for i := 120; i < 130; i++ {
-		s := addSample(app, int64(i), chunkenc.ValFloatHistogram)
+	for i := int64(120); i < 130; i++ {
+		s := addSample(app, i, chunkenc.ValFloatHistogram)
 		expSamples = append(expSamples, s)
 	}
 	// These samples will be marked as in-order as their timestamps are greater than the max timestamp for float
 	// samples in the same batch.
-	for i := 140; i < 150; i++ {
-		s := addSample(app, int64(i), chunkenc.ValFloatHistogram)
+	for i := int64(140); i < 150; i++ {
+		s := addSample(app, i, chunkenc.ValFloatHistogram)
 		expSamples = append(expSamples, s)
 	}
 	// These samples will be marked as in-order, even though they're appended after the float histograms from ts 140-150
 	// because float samples are processed first and these samples are in-order wrt to the float samples in the batch.
-	for i := 130; i < 135; i++ {
-		s := addSample(app, int64(i), chunkenc.ValFloat)
+	for i := int64(130); i < 135; i++ {
+		s := addSample(app, i, chunkenc.ValFloat)
 		expSamples = append(expSamples, s)
 	}
 
@@ -4823,8 +4823,8 @@ func TestMultipleEncodingsCommitOrder(t *testing.T) {
 
 	// Append and commit some in-order histograms by themselves.
 	app = db.Appender(context.Background())
-	for i := 150; i < 160; i++ {
-		s := addSample(app, int64(i), chunkenc.ValHistogram)
+	for i := int64(150); i < 160; i++ {
+		s := addSample(app, i, chunkenc.ValHistogram)
 		expSamples = append(expSamples, s)
 	}
 	require.NoError(t, app.Commit())
@@ -4835,20 +4835,20 @@ func TestMultipleEncodingsCommitOrder(t *testing.T) {
 	// Append and commit samples for all encoding types. This time all samples will be treated as OOO because samples
 	// with newer timestamps have already been committed.
 	app = db.Appender(context.Background())
-	for i := 50; i < 55; i++ {
-		s := addSample(app, int64(i), chunkenc.ValFloat)
+	for i := int64(50); i < 55; i++ {
+		s := addSample(app, i, chunkenc.ValFloat)
 		expSamples = append(expSamples, s)
 	}
-	for i := 60; i < 70; i++ {
-		s := addSample(app, int64(i), chunkenc.ValHistogram)
+	for i := int64(60); i < 70; i++ {
+		s := addSample(app, i, chunkenc.ValHistogram)
 		expSamples = append(expSamples, s)
 	}
-	for i := 70; i < 75; i++ {
-		s := addSample(app, int64(i), chunkenc.ValFloat)
+	for i := int64(70); i < 75; i++ {
+		s := addSample(app, i, chunkenc.ValFloat)
 		expSamples = append(expSamples, s)
 	}
-	for i := 80; i < 90; i++ {
-		s := addSample(app, int64(i), chunkenc.ValFloatHistogram)
+	for i := int64(80); i < 90; i++ {
+		s := addSample(app, i, chunkenc.ValFloatHistogram)
 		expSamples = append(expSamples, s)
 	}
 	require.NoError(t, app.Commit())
@@ -5426,37 +5426,37 @@ func TestQuerierOOOQuery(t *testing.T) {
 		},
 		"integer histogram": {
 			appendFunc: func(app storage.Appender, ts int64, counterReset bool) (storage.SeriesRef, error) {
-				h := tsdbutil.GenerateTestHistogram(int(ts))
+				h := tsdbutil.GenerateTestHistogram(ts)
 				if counterReset {
 					h.CounterResetHint = histogram.CounterReset
 				}
 				return app.AppendHistogram(0, labels.FromStrings("foo", "bar1"), ts, h, nil)
 			},
 			sampleFunc: func(ts int64) chunks.Sample {
-				return sample{t: ts, h: tsdbutil.GenerateTestHistogram(int(ts))}
+				return sample{t: ts, h: tsdbutil.GenerateTestHistogram(ts)}
 			},
 		},
 		"float histogram": {
 			appendFunc: func(app storage.Appender, ts int64, counterReset bool) (storage.SeriesRef, error) {
-				fh := tsdbutil.GenerateTestFloatHistogram(int(ts))
+				fh := tsdbutil.GenerateTestFloatHistogram(ts)
 				if counterReset {
 					fh.CounterResetHint = histogram.CounterReset
 				}
 				return app.AppendHistogram(0, labels.FromStrings("foo", "bar1"), ts, nil, fh)
 			},
 			sampleFunc: func(ts int64) chunks.Sample {
-				return sample{t: ts, fh: tsdbutil.GenerateTestFloatHistogram(int(ts))}
+				return sample{t: ts, fh: tsdbutil.GenerateTestFloatHistogram(ts)}
 			},
 		},
 		"integer histogram counter resets": {
 			// Adding counter reset to all histograms means each histogram will have its own chunk.
 			appendFunc: func(app storage.Appender, ts int64, counterReset bool) (storage.SeriesRef, error) {
-				h := tsdbutil.GenerateTestHistogram(int(ts))
+				h := tsdbutil.GenerateTestHistogram(ts)
 				h.CounterResetHint = histogram.CounterReset // For this scenario, ignore the counterReset argument.
 				return app.AppendHistogram(0, labels.FromStrings("foo", "bar1"), ts, h, nil)
 			},
 			sampleFunc: func(ts int64) chunks.Sample {
-				return sample{t: ts, h: tsdbutil.GenerateTestHistogram(int(ts))}
+				return sample{t: ts, h: tsdbutil.GenerateTestHistogram(ts)}
 			},
 		},
 	}
@@ -5742,37 +5742,37 @@ func TestChunkQuerierOOOQuery(t *testing.T) {
 		},
 		"integer histogram": {
 			appendFunc: func(app storage.Appender, ts int64, counterReset bool) (storage.SeriesRef, error) {
-				h := tsdbutil.GenerateTestHistogram(int(ts))
+				h := tsdbutil.GenerateTestHistogram(ts)
 				if counterReset {
 					h.CounterResetHint = histogram.CounterReset
 				}
 				return app.AppendHistogram(0, labels.FromStrings("foo", "bar1"), ts, h, nil)
 			},
 			sampleFunc: func(ts int64) chunks.Sample {
-				return sample{t: ts, h: tsdbutil.GenerateTestHistogram(int(ts))}
+				return sample{t: ts, h: tsdbutil.GenerateTestHistogram(ts)}
 			},
 		},
 		"float histogram": {
 			appendFunc: func(app storage.Appender, ts int64, counterReset bool) (storage.SeriesRef, error) {
-				fh := tsdbutil.GenerateTestFloatHistogram(int(ts))
+				fh := tsdbutil.GenerateTestFloatHistogram(ts)
 				if counterReset {
 					fh.CounterResetHint = histogram.CounterReset
 				}
 				return app.AppendHistogram(0, labels.FromStrings("foo", "bar1"), ts, nil, fh)
 			},
 			sampleFunc: func(ts int64) chunks.Sample {
-				return sample{t: ts, fh: tsdbutil.GenerateTestFloatHistogram(int(ts))}
+				return sample{t: ts, fh: tsdbutil.GenerateTestFloatHistogram(ts)}
 			},
 		},
 		"integer histogram counter resets": {
 			// Adding counter reset to all histograms means each histogram will have its own chunk.
 			appendFunc: func(app storage.Appender, ts int64, counterReset bool) (storage.SeriesRef, error) {
-				h := tsdbutil.GenerateTestHistogram(int(ts))
+				h := tsdbutil.GenerateTestHistogram(ts)
 				h.CounterResetHint = histogram.CounterReset // For this scenario, ignore the counterReset argument.
 				return app.AppendHistogram(0, labels.FromStrings("foo", "bar1"), ts, h, nil)
 			},
 			sampleFunc: func(ts int64) chunks.Sample {
-				return sample{t: ts, h: tsdbutil.GenerateTestHistogram(int(ts))}
+				return sample{t: ts, h: tsdbutil.GenerateTestHistogram(ts)}
 			},
 		},
 		"integer histogram with recode": {
@@ -6667,7 +6667,7 @@ func TestOOOHistogramCompactionWithCounterResets(t *testing.T) {
 
 		var series1ExpSamplesPreCompact, series2ExpSamplesPreCompact, series1ExpSamplesPostCompact, series2ExpSamplesPostCompact []chunks.Sample
 
-		addSample := func(ts int64, l labels.Labels, val int, hint histogram.CounterResetHint) sample {
+		addSample := func(ts int64, l labels.Labels, val int64, hint histogram.CounterResetHint) sample {
 			app := db.Appender(context.Background())
 			tsMs := ts * time.Minute.Milliseconds()
 			if floatHistogram {
@@ -6714,8 +6714,8 @@ func TestOOOHistogramCompactionWithCounterResets(t *testing.T) {
 
 		// Chunk 1.
 		// First add 10 samples.
-		for i := 100; i < 200; i += 10 {
-			s = addSample(int64(i), series1, 100000+i, histogram.UnknownCounterReset)
+		for i := int64(100); i < 200; i += 10 {
+			s = addSample(i, series1, 100000+i, histogram.UnknownCounterReset)
 			// Before compaction, all the samples have UnknownCounterReset even though they've been added to the same
 			// chunk. This is because they overlap with the samples from chunk two and when merging two chunks on read,
 			// the header is set as unknown when the next sample is not in the same chunk as the previous one.
@@ -6741,8 +6741,8 @@ func TestOOOHistogramCompactionWithCounterResets(t *testing.T) {
 		series1ExpSamplesPostCompact = append(series1ExpSamplesPostCompact, copyWithCounterReset(s, histogram.NotCounterReset))
 
 		// Add 19 more samples to complete a chunk.
-		for i := 260; i < 450; i += 10 {
-			s = addSample(int64(i), series1, 100000+i, histogram.UnknownCounterReset)
+		for i := int64(260); i < 450; i += 10 {
+			s = addSample(i, series1, 100000+i, histogram.UnknownCounterReset)
 			// The samples with timestamp less than 410 overlap with the samples from chunk 2, so before compaction,
 			// they're all UnknownCounterReset. Samples greater than or equal to 410 don't overlap with other chunks
 			// so they're always detected as NotCounterReset pre and post compaction/
@@ -6761,7 +6761,7 @@ func TestOOOHistogramCompactionWithCounterResets(t *testing.T) {
 		// Chunk 2.
 		// Add six OOO samples.
 		for i := 105; i < 165; i += 10 {
-			s = addSample(int64(i), series1, 100000+i, histogram.UnknownCounterReset)
+			s = addSample(i, series1, 100000+i, histogram.UnknownCounterReset)
 			// Samples overlap with chunk 1 so before compaction all headers are UnknownCounterReset.
 			series1ExpSamplesPreCompact = append(series1ExpSamplesPreCompact, s)
 			series1ExpSamplesPostCompact = append(series1ExpSamplesPostCompact, copyWithCounterReset(s, histogram.NotCounterReset))
@@ -6775,8 +6775,8 @@ func TestOOOHistogramCompactionWithCounterResets(t *testing.T) {
 		series1ExpSamplesPostCompact = append(series1ExpSamplesPostCompact, copyWithCounterReset(s, histogram.CounterReset))
 
 		// Add 23 more samples to complete a chunk.
-		for i := 175; i < 405; i += 10 {
-			s = addSample(int64(i), series1, 100000+i, histogram.UnknownCounterReset)
+		for i := int64(175); i < 405; i += 10 {
+			s = addSample(i, series1, 100000+i, histogram.UnknownCounterReset)
 			// Samples between 205-255 overlap with chunk 1 so before compaction those samples will have the
 			// UnknownCounterReset header.
 			if i >= 205 && i < 255 {
@@ -6793,8 +6793,8 @@ func TestOOOHistogramCompactionWithCounterResets(t *testing.T) {
 		}
 
 		// Chunk 3.
-		for i := 480; i < 490; i++ {
-			s = addSample(int64(i), series1, 100000+i, histogram.UnknownCounterReset)
+		for i := int64(480); i < 490; i++ {
+			s = addSample(i, series1, 100000+i, histogram.UnknownCounterReset)
 			// No overlapping samples in other chunks, so all other samples will already be detected as NotCounterReset
 			// before compaction.
 			if i > 480 {
@@ -6813,16 +6813,16 @@ func TestOOOHistogramCompactionWithCounterResets(t *testing.T) {
 		series1ExpSamplesPreCompact = append(series1ExpSamplesPreCompact, s)
 		series1ExpSamplesPostCompact = append(series1ExpSamplesPostCompact, s)
 		// Add some more samples after the counter reset.
-		for i := 491; i < 510; i++ {
-			s = addSample(int64(i), series1, 100000+i, histogram.UnknownCounterReset)
+		for i := int64(491); i < 510; i++ {
+			s = addSample(i, series1, 100000+i, histogram.UnknownCounterReset)
 			s = copyWithCounterReset(s, histogram.NotCounterReset)
 			series1ExpSamplesPreCompact = append(series1ExpSamplesPreCompact, s)
 			series1ExpSamplesPostCompact = append(series1ExpSamplesPostCompact, s)
 		}
 
 		// Add samples for series2 - one chunk with one detected counter reset at 300.
-		for i := 200; i < 300; i += 10 {
-			s = addSample(int64(i), series2, 100000+i, histogram.UnknownCounterReset)
+		for i := int64(200); i < 300; i += 10 {
+			s = addSample(i, series2, 100000+i, histogram.UnknownCounterReset)
 			if i > 200 {
 				s = copyWithCounterReset(s, histogram.NotCounterReset)
 			}
@@ -6838,8 +6838,8 @@ func TestOOOHistogramCompactionWithCounterResets(t *testing.T) {
 		series2ExpSamplesPreCompact = append(series2ExpSamplesPreCompact, s)
 		series2ExpSamplesPostCompact = append(series2ExpSamplesPostCompact, s)
 		// Add some more samples after the counter reset.
-		for i := 310; i < 500; i += 10 {
-			s := addSample(int64(i), series2, 100000+i, histogram.UnknownCounterReset)
+		for i := int64(310); i < 500; i += 10 {
+			s := addSample(i, series2, 100000+i, histogram.UnknownCounterReset)
 			s = copyWithCounterReset(s, histogram.NotCounterReset)
 			series2ExpSamplesPreCompact = append(series2ExpSamplesPreCompact, s)
 			// 360 and 480 are block boundaries.

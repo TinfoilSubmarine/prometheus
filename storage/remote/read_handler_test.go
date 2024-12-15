@@ -431,7 +431,7 @@ func TestStreamReadEndpoint(t *testing.T) {
 	}, results)
 }
 
-func addNativeHistogramsToTestSuite(t *testing.T, storage *teststorage.TestStorage, n int) {
+func addNativeHistogramsToTestSuite(t *testing.T, storage *teststorage.TestStorage, n int64) {
 	lbls := labels.FromStrings("__name__", "test_histogram_metric1", "baz", "qux")
 
 	app := storage.Appender(context.TODO())

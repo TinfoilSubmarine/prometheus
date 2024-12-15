@@ -626,7 +626,7 @@ func Test_ExistingWAL_NextRef(t *testing.T) {
 	}
 
 	histogramCount := 10
-	histograms := tsdbutil.GenerateTestHistograms(histogramCount)
+	histograms := tsdbutil.GenerateTestHistograms(int64(histogramCount))
 	// Append <histogramCount> series
 	for i := 0; i < histogramCount; i++ {
 		lset := labels.FromStrings(model.MetricNameLabel, fmt.Sprintf("histogram_%d", i))

@@ -1816,7 +1816,7 @@ func rmChunkRefs(chks []chunks.Meta) {
 	}
 }
 
-func checkCurrVal(t *testing.T, valType chunkenc.ValueType, it *populateWithDelSeriesIterator, expectedTs, expectedValue int) {
+func checkCurrVal(t *testing.T, valType chunkenc.ValueType, it *populateWithDelSeriesIterator, expectedTs, expectedValue int64) {
 	switch valType {
 	case chunkenc.ValFloat:
 		ts, v := it.At()
@@ -3563,18 +3563,18 @@ func BenchmarkHeadQuerier(b *testing.B) {
 // populateWithDelChunkSeriesIterator correctly.
 func TestQueryWithDeletedHistograms(t *testing.T) {
 	ctx := context.Background()
-	testcases := map[string]func(int) (*histogram.Histogram, *histogram.FloatHistogram){
-		"intCounter": func(i int) (*histogram.Histogram, *histogram.FloatHistogram) {
+	testcases := map[string]func(int64) (*histogram.Histogram, *histogram.FloatHistogram){
+		"intCounter": func(i int64) (*histogram.Histogram, *histogram.FloatHistogram) {
 			return tsdbutil.GenerateTestHistogram(i), nil
 		},
-		"intgauge": func(i int) (*histogram.Histogram, *histogram.FloatHistogram) {
-			return tsdbutil.GenerateTestGaugeHistogram(rand.Int() % 1000), nil
+		"intgauge": func(i int64) (*histogram.Histogram, *histogram.FloatHistogram) {
+			return tsdbutil.GenerateTestGaugeHistogram(rand.Int63() % 1000), nil
 		},
-		"floatCounter": func(i int) (*histogram.Histogram, *histogram.FloatHistogram) {
+		"floatCounter": func(i int64) (*histogram.Histogram, *histogram.FloatHistogram) {
 			return nil, tsdbutil.GenerateTestFloatHistogram(i)
 		},
-		"floatGauge": func(i int) (*histogram.Histogram, *histogram.FloatHistogram) {
-			return nil, tsdbutil.GenerateTestGaugeFloatHistogram(rand.Int() % 1000)
+		"floatGauge": func(i int64) (*histogram.Histogram, *histogram.FloatHistogram) {
+			return nil, tsdbutil.GenerateTestGaugeFloatHistogram(rand.Int63() % 1000)
 		},
 	}
 
@@ -3595,7 +3595,7 @@ func TestQueryWithDeletedHistograms(t *testing.T) {
 			lbs := labels.FromStrings("__name__", "test", "type", name)
 
 			for i := 0; i < 100; i++ {
-				h, fh := tc(i)
+				h, fh := tc(int64(i))
 				seriesRef, err = appender.AppendHistogram(seriesRef, lbs, int64(i), h, fh)
 				require.NoError(t, err)
 			}
